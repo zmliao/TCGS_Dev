@@ -14,6 +14,9 @@ from torch.utils.cpp_extension import CUDAExtension, BuildExtension
 import os
 os.path.dirname(os.path.abspath(__file__))
 
+base_dir = os.path.dirname(os.path.abspath(__file__))
+tcgs_dir = tcgs_dir = os.path.join(base_dir, "cuda_rasterizer/tcgs")
+
 setup(
     name="diff_gaussian_rasterization",
     packages=['diff_gaussian_rasterization'],
@@ -21,14 +24,28 @@ setup(
         CUDAExtension(
             name="diff_gaussian_rasterization._C",
             sources=[
-            "cuda_rasterizer/rasterizer_impl.cu",
-            "cuda_rasterizer/forward.cu",
-            "cuda_rasterizer/backward.cu",
-            "cuda_rasterizer/adam.cu",
-            "rasterize_points.cu",
-            "conv.cu",
-            "ext.cpp"],
-            extra_compile_args={"nvcc": ["-I" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "third_party/glm/")]})
+                "cuda_rasterizer/rasterizer_impl.cu",
+                "cuda_rasterizer/forward.cu",
+                "cuda_rasterizer/backward.cu",
+                "cuda_rasterizer/adam.cu",
+                "cuda_rasterizer/tcgs/tcgs_forward.cu",
+                "rasterize_points.cu",
+                "conv.cu",
+                "ext.cpp"
+            ],
+            include_dirs=[
+                os.path.join(base_dir, "cuda_rasterizer"),
+                os.path.join(base_dir, "third_party/glm/"),
+                tcgs_dir
+            ],
+            extra_compile_args={
+                "nvcc": [
+                    "--expt-relaxed-constexpr",
+                    "--ptxas-options=-v",
+                    "-DTCGS_ENABLED=1",
+                ],
+                "cxx": ["-DTCGS_ENABLED=1"]
+            }
         ],
     cmdclass={
         'build_ext': BuildExtension
