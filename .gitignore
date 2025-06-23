@@ -9,3 +9,4 @@ screenshots
 __pycache__
 data
 ./output
+submodules/tcgs_rasterizer/build
