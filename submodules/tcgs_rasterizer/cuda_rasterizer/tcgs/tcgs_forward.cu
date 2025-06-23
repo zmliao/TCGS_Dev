@@ -357,3 +357,6 @@ void TCGS::renderCUDA_Forward(
     cudaFree(feature_encoded);
     
 }
+
+
+void TCGS::renderCUDA_Forward_Ta
