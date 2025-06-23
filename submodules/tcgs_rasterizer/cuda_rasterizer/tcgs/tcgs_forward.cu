@@ -2,6 +2,7 @@
 #include "tcgs.h"
 #include "tcgs_utils.h"
 #include <cuda.h>
+#include <cub/cub.cuh>
 #include <cooperative_groups.h>
 #include "cuda_runtime.h"
 
@@ -165,7 +166,14 @@ __global__ void renderCUDA_TCGS(
     uint32_t* __restrict__ n_contrib,
     const float* __restrict__ bg_color,
     float* __restrict__ out_color,
-    float* __restrict__ invdepth
+    float* __restrict__ invdepth,
+    bool is_taming = false,
+    const uint32_t* __restrict__ per_tile_bucket_offset = nullptr,
+    uint32_t* __restrict__ bucket_to_tile = nullptr,
+    half* __restrict__ sampled_T = nullptr,
+    uint2* __restrict__ sampled_ar = nullptr,
+    uint32_t num_buckets = 0u,
+    uint32_t* __restrict__ max_contrib = nullptr
 ) 
 {
     auto block = cg::this_thread_block();
@@ -210,6 +218,16 @@ __global__ void renderCUDA_TCGS(
     uint num_contrib = 0u;
     uint2 RGBD = make_uint2(0u, 0u);
 
+    uint32_t bbm = 0;
+    if(is_taming){
+        bbm = tile_id == 0 ? 0 : per_tile_bucket_offset[tile_id - 1];
+        for (int i = 0; i < (num_buckets + BLOCK_SIZE_TCGS - 1) / BLOCK_SIZE_TCGS; ++i) {
+            int bucket_idx = i * BLOCK_SIZE_TCGS + block.thread_rank();
+            if (bucket_idx < num_buckets) {
+                bucket_to_tile[bbm + bucket_idx] = tile_id;
+            }
+        }
+    }
     for(int i = 0; i < rounds; ++i, toDo -= BLOCK_SIZE_TCGS)
     {
         int num_done = __syncthreads_count(done);
@@ -235,6 +253,11 @@ __global__ void renderCUDA_TCGS(
         block.sync();
         const int gs_num = min(BLOCK_SIZE_TCGS, toDo);
         for(int j = 0; !warp_done && j < gs_num; j += REDUCE_SIZE){
+            if (is_taming && j % 32 == 0) {
+				sampled_T[(bbm * BLOCK_SIZE_TCGS) + block.thread_rank()] = T;
+				sampled_ar[(bbm * BLOCK_SIZE_TCGS) + block.thread_rank()] = RGBD;
+				++bbm;
+			}
             //1. load the Gaussian matrix V
             uint gsmat_reg[2];
             load_matrix_x2(gsmat_reg[0], gsmat_reg[1], multiuse_matrix + (j<<2) + ((thread_id&31)<<2));
@@ -284,6 +307,15 @@ __global__ void renderCUDA_TCGS(
             invdepth[pix_id] = __half2float(BDh.y);
         
         n_contrib[pix_id] = num_contrib;
+    }
+    if(is_taming)
+    {
+        typedef cub::BlockReduce<uint32_t, BLOCK_SIZE_TCGS> BlockReduce;
+        __shared__ typename BlockReduce::TempStorage temp_storage;
+        num_contrib = BlockReduce(temp_storage).Reduce(num_contrib, cub::Max());
+        if (block.thread_rank() == 0) {
+            max_contrib[tile_id] = num_contrib;
+        }
     }
 }
 
@@ -389,5 +421,27 @@ void TCGS::renderCUDA_Forward_Taming(
         float* depth
 )
 {
+    auto sample = CudaRasterizer_TCGS::SampleState::fromChunk(sample_chunkptr, B);
 
+    //Preprocess for TCGS
+    uint2* feature_encoded = nullptr;
+    cudaMalloc(&feature_encoded, P * sizeof(uint2));
+    transform_coefs<< <(P + 255) / 256, 256>> >(
+        P, features, depths, conic_opacity, feature_encoded, depth
+    );
+
+    //Running TCGS
+    renderCUDA_TCGS<< <grid, block>> >(
+        ranges, point_list,
+        width, height,
+        means2D, feature_encoded, conic_opacity,
+        final_T, n_contrib,
+        bg_color, out_color, depth,
+        true, bucket_offsets,
+        sample.bucket_to_tile, sample.T, sample.ar,
+        B, max_contrib
+    );
+    
+    //
+    cudaFree(feature_encoded);
 }
