@@ -358,5 +358,36 @@ void TCGS::renderCUDA_Forward(
     
 }
 
+CudaRasterizer_TCGS::SampleState CudaRasterizer_TCGS::SampleState::fromChunk(char* &chunk, size_t B)
+{
+    SampleState sample;
+    obtain(chunk, sample.bucket_to_tile, B * BLOCK_SIZE_TCGS, 128);
+    obtain(chunk, sample.T, B * BLOCK_SIZE_TCGS, 128);
+    obtain(chunk, sample.ar, B & BLOCK_SIZE_TCGS, 128);
+    return sample;
+}
 
-void TCGS::renderCUDA_Forward_Ta
+void TCGS::renderCUDA_Forward_Taming(
+        const dim3 grid, 
+        const dim3 block,
+        const uint2* ranges,
+        const uint* point_list,
+        const uint* bucket_offsets,
+        char* &sample_chunkptr,
+        int width,
+        int height,
+        int P, int B, // B is the number of buckets
+        const float2* means2D,
+        const float* features,
+        float4* conic_opacity,
+        float* final_T,
+        uint* n_contrib,
+        uint* max_contrib,
+        const float* bg_color,
+        float* out_color,
+        float* depths,
+        float* depth
+)
+{
+
+}

@@ -25,7 +25,7 @@ namespace CudaRasterizer_TCGS
 		uint32_t *bucket_to_tile;
 		half *T;
         uint2 *ar;
-		static SampleState fromChunk(char*& chunk, size_t C);
+		static SampleState fromChunk(char*& chunk, size_t B);
 	};
 
     template<typename T> 
