@@ -28,9 +28,13 @@ add_library(CudaRasterizer
 	cuda_rasterizer/rasterizer_impl.cu
 	cuda_rasterizer/rasterizer_impl.h
 	cuda_rasterizer/rasterizer.h
+	cuda_rasterizer/tcgs/tcgs.h
+	cuda_rasterizer/tcgs/tcgs_utils.h
+	cuda_rasterizer/tcgs/tcgs
 )
 
 set_target_properties(CudaRasterizer PROPERTIES CUDA_ARCHITECTURES "70;75;86")
 
 target_include_directories(CudaRasterizer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cuda_rasterizer)
+target_include_directories(CudaRasterizer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cuda_rasterizer/tcgs)
 target_include_directories(CudaRasterizer PRIVATE third_party/glm ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})

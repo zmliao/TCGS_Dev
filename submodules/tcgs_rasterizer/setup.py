@@ -46,7 +46,8 @@ setup(
                 ],
                 "cxx": ["-DTCGS_ENABLED=1"]
             }
-        ],
+        )
+    ],
     cmdclass={
         'build_ext': BuildExtension
     }

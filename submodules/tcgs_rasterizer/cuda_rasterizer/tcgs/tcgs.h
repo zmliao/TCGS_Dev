@@ -9,6 +9,9 @@
 #endif
 
 #include<cuda_fp16.h>
+#include <iostream>
+#include <vector>
+#include <cuda_runtime_api.h>
 
 namespace CudaRasterizer_TCGS
 {

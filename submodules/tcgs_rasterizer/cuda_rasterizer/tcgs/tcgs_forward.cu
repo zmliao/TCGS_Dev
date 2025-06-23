@@ -172,7 +172,6 @@ __global__ void renderCUDA_TCGS(
     uint32_t* __restrict__ bucket_to_tile = nullptr,
     half* __restrict__ sampled_T = nullptr,
     uint2* __restrict__ sampled_ar = nullptr,
-    uint32_t num_buckets = 0u,
     uint32_t* __restrict__ max_contrib = nullptr
 ) 
 {
@@ -221,6 +220,7 @@ __global__ void renderCUDA_TCGS(
     uint32_t bbm = 0;
     if(is_taming){
         bbm = tile_id == 0 ? 0 : per_tile_bucket_offset[tile_id - 1];
+        int num_buckets = (toDo + 31) / 32;
         for (int i = 0; i < (num_buckets + BLOCK_SIZE_TCGS - 1) / BLOCK_SIZE_TCGS; ++i) {
             int bucket_idx = i * BLOCK_SIZE_TCGS + block.thread_rank();
             if (bucket_idx < num_buckets) {
@@ -400,25 +400,25 @@ CudaRasterizer_TCGS::SampleState CudaRasterizer_TCGS::SampleState::fromChunk(cha
 }
 
 void TCGS::renderCUDA_Forward_Taming(
-        const dim3 grid, 
-        const dim3 block,
-        const uint2* ranges,
-        const uint* point_list,
-        const uint* bucket_offsets,
-        char* &sample_chunkptr,
-        int width,
-        int height,
-        int P, int B, // B is the number of buckets
-        const float2* means2D,
-        const float* features,
-        float4* conic_opacity,
-        float* final_T,
-        uint* n_contrib,
-        uint* max_contrib,
-        const float* bg_color,
-        float* out_color,
-        float* depths,
-        float* depth
+    const dim3 grid, 
+    const dim3 block,
+    const uint2* ranges,
+    const uint* point_list,
+    const uint* bucket_offsets,
+    char* &sample_chunkptr,
+    int width,
+    int height,
+    int P, int B, // B is the number of buckets
+    const float2* means2D,
+    const float* features,
+    float4* conic_opacity,
+    float* final_T,
+    uint* n_contrib,
+    uint* max_contrib,
+    const float* bg_color,
+    float* out_color,
+    float* depths,
+    float* depth
 )
 {
     auto sample = CudaRasterizer_TCGS::SampleState::fromChunk(sample_chunkptr, B);
@@ -438,10 +438,9 @@ void TCGS::renderCUDA_Forward_Taming(
         final_T, n_contrib,
         bg_color, out_color, depth,
         true, bucket_offsets,
-        sample.bucket_to_tile, sample.T, sample.ar,
-        B, max_contrib
+        sample.bucket_to_tile, sample.T, sample.ar, max_contrib
     );
-    
+
     //
     cudaFree(feature_encoded);
 }

@@ -24,11 +24,13 @@
 
 #include <cooperative_groups.h>
 #include <cooperative_groups/reduce.h>
+
 namespace cg = cooperative_groups;
 
 #include "auxiliary.h"
 #include "forward.h"
 #include "backward.h"
+#include "tcgs.h"
 
 // Helper function to find the next-highest bit of the MSB
 // on the CPU.
@@ -470,10 +472,32 @@ std::tuple<int,int> CudaRasterizer::Rasterizer::forward(
 	// create a state to store. size is number is the total number of buckets * block_size
 	size_t sample_chunk_size = required<SampleState>(bucket_sum);
 	char* sample_chunkptr = sampleBuffer(sample_chunk_size);
+
+	const float* feature_ptr = colors_precomp != nullptr ? colors_precomp : geomState.rgb;
+
+#if UTIL_TCGS
+	CHECK_CUDA(TCGS::renderCUDA_Forward_Taming(
+		tile_grid, block,
+		imgState.ranges,
+		binningState.point_list,
+		imgState.bucket_offsets,
+		sample_chunkptr,
+		width, height,
+		P, bucket_sum,
+		geomState.means2D,
+		feature_ptr,
+		geomState.conic_opacity,
+		imgState.accum_alpha,
+		imgState.n_contrib,
+		imgState.max_contrib,
+		background,
+		out_color,
+		geomState.depths,
+		invdepth), debug)
+#else
 	SampleState sampleState = SampleState::fromChunk(sample_chunkptr, bucket_sum);
 
 	// Let each tile blend its range of Gaussians independently in parallel
-	const float* feature_ptr = colors_precomp != nullptr ? colors_precomp : geomState.rgb;
 	CHECK_CUDA(FORWARD::render(
 		tile_grid, block,
 		imgState.ranges,
@@ -491,7 +515,7 @@ std::tuple<int,int> CudaRasterizer::Rasterizer::forward(
 		out_color,
 		geomState.depths,
 		invdepth), debug)
-
+#endif
 	CHECK_CUDA(cudaMemcpy(imgState.pixel_colors, out_color, sizeof(float) * width * height * NUM_CHANNELS_3DGS, cudaMemcpyDeviceToDevice), debug);
 	CHECK_CUDA(cudaMemcpy(imgState.pixel_invDepths, invdepth, sizeof(float) * width * height, cudaMemcpyDeviceToDevice), debug);
 	return std::make_tuple(num_rendered, bucket_sum);
