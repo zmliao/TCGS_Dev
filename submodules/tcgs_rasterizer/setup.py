@@ -15,7 +15,7 @@ import os
 os.path.dirname(os.path.abspath(__file__))
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
-tcgs_dir = tcgs_dir = os.path.join(base_dir, "cuda_rasterizer/tcgs")
+tcgs_dir = os.path.join(base_dir, "cuda_rasterizer/tcgs")
 
 setup(
     name="diff_gaussian_rasterization",
@@ -28,7 +28,7 @@ setup(
                 "cuda_rasterizer/forward.cu",
                 "cuda_rasterizer/backward.cu",
                 "cuda_rasterizer/adam.cu",
-                "cuda_rasterizer/tcgs/tcgs_forward.cu",
+                "cuda_rasterizer/tcgs/tcgs_render.cu",
                 "rasterize_points.cu",
                 "conv.cu",
                 "ext.cpp"

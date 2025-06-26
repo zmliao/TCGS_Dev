@@ -564,7 +564,7 @@ void CudaRasterizer::Rasterizer::backward(
 	GeometryState geomState = GeometryState::fromChunk(geom_buffer, P);
 	BinningState binningState = BinningState::fromChunk(binning_buffer, R);
 	ImageState imgState = ImageState::fromChunk(img_buffer, width * height);
-	SampleState sampleState = SampleState::fromChunk(sample_buffer, B);
+
 
 	if (radii == nullptr)
 	{
@@ -581,6 +581,34 @@ void CudaRasterizer::Rasterizer::backward(
 	// opacity and RGB of Gaussians from per-pixel loss gradients.
 	// If we were given precomputed colors and not SHs, use them.
 	const float* color_ptr = (colors_precomp != nullptr) ? colors_precomp : geomState.rgb;
+
+#if UTIL_TCGS
+	CHECK_CUDA(TCGS::renderCUDA_Backward_Taming(
+		tile_grid, block,
+		imgState.ranges,
+		binningState.point_list,
+		width, height, R, B, P,
+		imgState.bucket_offsets,
+		sample_buffer,
+		background,
+		geomState.means2D,
+		geomState.conic_opacity,
+		color_ptr,
+		geomState.depths,
+		imgState.accum_alpha,
+		imgState.n_contrib,
+		imgState.max_contrib,
+		imgState.pixel_colors,
+		imgState.pixel_invDepths,
+		dL_dpix, dL_invdepths,
+		(float3*)dL_dmean2D, 
+		(float4*)dL_dconic, 
+		dL_dopacity, 
+		dL_dcolor, 
+		dL_dinvdepth), 
+	debug)
+#else
+	SampleState sampleState = SampleState::fromChunk(sample_buffer, B);
 	CHECK_CUDA(BACKWARD::render(
 		tile_grid,
 		block,
@@ -609,7 +637,7 @@ void CudaRasterizer::Rasterizer::backward(
 		dL_dopacity,
 		dL_dcolor,
 		dL_dinvdepth), debug)
-
+#endif
 	// Take care of the rest of preprocessing. Was the precomputed covariance
 	// given to us or a scales/rot pair? If precomputed, pass that. If not,
 	// use the one we computed ourselves.

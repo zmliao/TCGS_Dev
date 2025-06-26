@@ -30,7 +30,7 @@ add_library(CudaRasterizer
 	cuda_rasterizer/rasterizer.h
 	cuda_rasterizer/tcgs/tcgs.h
 	cuda_rasterizer/tcgs/tcgs_utils.h
-	cuda_rasterizer/tcgs/tcgs
+	cuda_rasterizer/tcgs/tcgs_renderer.cu
 )
 
 set_target_properties(CudaRasterizer PROPERTIES CUDA_ARCHITECTURES "70;75;86")

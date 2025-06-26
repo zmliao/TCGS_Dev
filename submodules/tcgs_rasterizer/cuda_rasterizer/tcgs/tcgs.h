@@ -28,7 +28,8 @@ namespace CudaRasterizer_TCGS
 		uint32_t *bucket_to_tile;
 		half *T;
         uint2 *ar;
-		static SampleState fromChunk(char*& chunk, size_t B);
+        uint2 *channels;
+		static SampleState fromChunk(char*& chunk, size_t B, size_t P);
 	};
 
     template<typename T> 
@@ -36,6 +37,14 @@ namespace CudaRasterizer_TCGS
 	{
 		char* size = nullptr;
 		T::fromChunk(size, P);
+		return ((size_t)size) + 128;
+	}
+
+    template<typename T> 
+	size_t required(size_t P, size_t Q)
+	{
+		char* size = nullptr;
+		T::fromChunk(size, P, Q);
 		return ((size_t)size) + 128;
 	}
 };
@@ -82,6 +91,33 @@ namespace TCGS
         float* out_color,
         float* depths,
         float* depth
+    );
+
+    void renderCUDA_Backward_Taming(
+        const dim3 grid,
+        const dim3 block,
+        const uint2* ranges,
+        const uint* point_list,
+        int width, int height, int R, int B, int P,
+        const uint* bucket_offsets,
+        char* &sample_chunkptr,
+        const float* bg_color,
+        const float2* means2D,
+        const float4* conic_opacity,
+        const float* colors,
+        const float* depths,
+        const float* final_Ts,
+        const uint32_t* n_contrib,
+        const uint32_t* max_contrib,
+        const float* pixel_colors,
+        const float* pixel_invDepths,
+        const float* dL_dpixels,
+        const float* dL_invdepths,
+        float3* dL_dmean2D,
+        float4* dL_dconic2D,
+        float* dL_dopacity,
+        float* dL_dcolors,
+        float* dL_dinvdepths
     );
 };
 

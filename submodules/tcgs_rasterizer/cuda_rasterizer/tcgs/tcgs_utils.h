@@ -19,6 +19,7 @@ namespace TCGS_UTIL
     constexpr float LOG2E_N = - LOG2E;
     constexpr float LOG2E_N_2 = - LOG2E_2;
     constexpr float LN2 = 0.6931471805599453f;
+    constexpr float LN2_2 = LN2 * 0.5f;
 
     constexpr uint WAPR_SIZE = 32u;
     constexpr uint REDUCE_SIZE = 16u;
@@ -43,6 +44,15 @@ namespace TCGS_UTIL
         float2 temp_f = make_float2(x, y);
         half2 temp_h = __float22half2_rn(temp_f);
         return half22uint(temp_h);
+    }
+
+    __forceinline__ __device__ float4 reg22float4(uint2 x)
+    {
+        half2 temp_h = __UI_TO_HALF2_TCGS(x.x);
+        float2 temp_f1 = __half22float2(temp_h);
+        temp_h = __UI_TO_HALF2_TCGS(x.y);
+        float2 temp_f2 = __half22float2(temp_h);
+        return make_float4(temp_f1.x, temp_f1.y, temp_f2.x, temp_f2.y);
     }
 
     __forceinline__ __device__ void load_matrix_x4(
@@ -109,6 +119,17 @@ namespace TCGS_UTIL
 	    return y;
     }
 
+    __forceinline__ __device__ float fast_ex2_f32(float x)
+    {
+        float y;
+	    asm volatile(
+            "ex2.approx.f32 %0, %1;\n"
+            : "=f"(y)
+            : "f"(x)
+        );
+	    return y;
+    }
+
     __forceinline__ __device__ float fast_lg2_f32(float x)
     {
         float y;
@@ -129,6 +150,17 @@ namespace TCGS_UTIL
             : "r"(a), "r"(b), "r"(c)
         );
         return d;
+    }
+
+    __forceinline__ __device__ uint fast_neg_f16x2(uint a)
+    {
+        uint b;
+        asm volatile(
+            "neg.f16x2 %0, %1;\n"
+            : "=r"(b)
+            : "r"(a)
+        );
+        return b;
     }
 };
 
