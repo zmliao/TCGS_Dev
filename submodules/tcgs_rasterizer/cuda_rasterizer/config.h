@@ -16,6 +16,6 @@
 #define BLOCK_X 16
 #define BLOCK_Y 16
 
-#define UTIL_TCGS true
+#define UTIL_TCGS false
 
 #endif
