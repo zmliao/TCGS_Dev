@@ -9,7 +9,7 @@ nsys profile \
     --force-overwrite=true \
     --trace=cuda,nvtx,cublas,cudnn,osrt \
     --cuda-memory-usage=true \
-    -o baseline-report \
+    -o tc-report \
     python train_dash.py \
         -s ${DATA}/${SCENE}/ \
         -m ./output/${SCENE} \

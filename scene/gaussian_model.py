@@ -117,6 +117,16 @@ class GaussianModel:
         features_rest = self._features_rest
         return torch.cat((features_dc, features_rest), dim=1)
     
+    def export_grad(self):
+        return {
+            "xyz" : self._xyz.grad.cpu().clone(),
+            "features_dc" : self._features_dc.grad.cpu().clone(),
+            "features_rest" : self._features_rest.grad.cpu().clone(),
+            "scaling" : self._scaling.grad.cpu().clone(),
+            "rotation" : self._rotation.grad.cpu().clone(),
+            "opacity" : self._opacity.grad.cpu().clone()
+        }
+    
     @property
     def get_features_dc(self):
         return self._features_dc

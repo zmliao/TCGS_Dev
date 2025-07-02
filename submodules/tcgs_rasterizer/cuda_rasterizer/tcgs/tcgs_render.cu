@@ -291,7 +291,7 @@ __global__ void renderCUDA_TCGS(
             num_contrib += REDUCE_SIZE;
         }
     }
-
+    num_contrib = min(num_contrib, range.y - range.x);
     //output colors and other informations
     if(inside)
     {
@@ -503,12 +503,13 @@ __global__ void renderCUDA_Backward_Taming_TCGS(
 	float2 xy = {0.0f, 0.0f};
 	float4 con_o = {0.0f, 0.0f, 0.0f, 0.0f};
 	float4 RGBD = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+    float opacity = 0.0f;
 
 	if (valid_splat) {
 		gaussian_idx = point_list[splat_idx_global];
 		xy = points_xy_image[gaussian_idx];
 		con_o = conic_opacity[gaussian_idx];
-        con_o.w = fast_ex2_f32(con_o.w);
+        opacity = fast_ex2_f32(con_o.w);
         RGBD = reg22float4(channels[gaussian_idx]); 
 	}
 
@@ -534,8 +535,6 @@ __global__ void renderCUDA_Backward_Taming_TCGS(
 	float last_contributor;
 	float4 ar;
 	float4 dL_dchannel;
-	const float ddelx_dx = 0.5 * width;
-	const float ddely_dy = 0.5 * height;
 
 	// iterate over all pixels in the tile
 	for (int i = 0; i < BLOCK_SIZE_TCGS + 31; ++i) {
@@ -551,7 +550,9 @@ __global__ void renderCUDA_Backward_Taming_TCGS(
 
 		// which pixel index should this thread deal with?
 		int idx = i - my_warp.thread_rank();
-		const uint2 pix = {pix_min.x | (idx & 7) | ((idx & 128) >> 4), pix_min.y | ((idx & 127) >> 3)};
+        if(idx < 0)
+            continue;
+		const uint2 pix = make_uint2(pix_min.x + (idx & 7) + ((idx >> 7) <<3), pix_min.y + ((idx & 127) >> 3));
 		const uint32_t pix_id = width * pix.y + pix.x;
 		const float2 pixf = {(float) pix.x, (float) pix.y};
 		bool valid_pixel = pix.x < width && pix.y < height;
@@ -588,16 +589,15 @@ __global__ void renderCUDA_Backward_Taming_TCGS(
 
 			// compute blending values
 			const float2 d = { xy.x - pixf.x, xy.y - pixf.y };
-			const float power = con_o.x * d.x * d.x + con_o.y * d.x * d.y + con_o.z * d.y * d.y;
+			const float power = con_o.x * d.x * d.x + con_o.y * d.x * d.y + con_o.z * d.y * d.y + con_o.w;
 			if (power > 0.0f) 
                 continue;
                 
-			const float G = exp(power);
-			const float alpha = min(0.99f, con_o.w * G);
+			const float alpha = min(0.99f, fast_ex2_f32(power));
 			if (alpha < 1.0f / 255.0f)
                 continue;
 			const float weight = alpha * T;
-
+            T = T - weight;
 			// add the gradient contribution of this pixel's colour to the gaussian
             ar.x += weight * RGBD.x;
             ar.y += weight * RGBD.y;
@@ -616,9 +616,9 @@ __global__ void renderCUDA_Backward_Taming_TCGS(
                 (RGBD.z * weight + coef * ar.z) * dL_dchannel.z +
                 (RGBD.w * weight + coef * ar.w) * dL_dchannel.w;
             
-            dL_dexpo -= coef * dL_dBG;
+            dL_dexpo += coef * dL_dBG;
 
-            Register_dL_dopacity += dL_dexpo / con_o.w;
+            Register_dL_dopacity += dL_dexpo / opacity;
             Register_dL_dconic2D_x += dL_dexpo * d.x * d.x;
             Register_dL_dconic2D_y += dL_dexpo * d.x * d.y;
             Register_dL_dconic2D_w += dL_dexpo * d.y * d.y;

@@ -1,6 +1,6 @@
 DATA=/nas/shared/pjlab_lingjun_landmarks/yumulin_group/nerf_data/mipnerf360/
 SCENE=flowers
-CKPT=/cpfs04/user/liaozimu/ckpt/models/
+CKPT=./output
 
 export CUDA_VISIBLE_DEVICES=0
 # nsys profile \
@@ -9,9 +9,9 @@ export CUDA_VISIBLE_DEVICES=0
 #     --trace=cuda,nvtx,cublas,cudnn,osrt \
 #     --cuda-memory-usage=true \
 #     -o eval_report \
-python render_back.py \
+python render.py \
     -s ${DATA}/${SCENE}/ \
     -m ${CKPT}/${SCENE}/ \
-    --iteration 1919810 \
+    --iteration 114514 \
     --white_background \
     --skip_train

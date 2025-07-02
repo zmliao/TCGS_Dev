@@ -11,3 +11,5 @@ data
 ./output
 submodules/tcgs_rasterizer/build
 *.log
+*.nsys-rep
+*.sqlite
