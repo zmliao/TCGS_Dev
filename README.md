@@ -17,7 +17,7 @@ git clone https://github.com/TensorCore3DGS/TCGS_Dev/tree/master
 
 3. Replace the renderer by TC-GS module.
 ```shell
-pip install submodules/diff-gaussian-rasterization
+pip install submodules/tcgs_rasterizer
 ```
 
 
