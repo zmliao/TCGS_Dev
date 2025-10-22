@@ -1,6 +1,6 @@
 export CUDA_VISIBLE_DEVICES=0
 
-DATA=/mnt/shared-storage-user/ailab-sys/liaozimu/data/tandt
+DATA=$YOUR_DATA_PATH
 SCENE=truck
 
 python train_dash.py \

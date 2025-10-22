@@ -1,3 +1,26 @@
+# DashGaussian with TC-GS
+
+This repo applies [TC-GS](https://arxiv.org/pdf/2505.24796v2) to [DashGaussian](https://dashgaussian.github.io/) , achieving 1.2x speedup on average during the training process.
+
+Only the forward pass utilizes the Tensor Cores.
+
+If you want to use TC-GS module, try install  ```submodules/tcgs_rasterizer``` **instead of** ```submodules/diff-gaussian-rasterization``` 
+
+## Usage
+
+1. clone this repo
+```shell
+git clone https://github.com/TensorCore3DGS/TCGS_Dev/tree/master
+```
+
+2. Setup the environment as [DashGaussian](https://dashgaussian.github.io/) 
+
+3. Replace the renderer by TC-GS module.
+```shell
+pip install submodules/diff-gaussian-rasterization
+```
+
+
 # DashGaussian: Optimizing 3D Gaussian Splatting in 200 Seconds
 ### [Webpage](https://dashgaussian.github.io/) | [Paper](https://arxiv.org/pdf/2503.18402) | [arXiv](https://arxiv.org/abs/2503.18402) | [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
