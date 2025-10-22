@@ -4,7 +4,7 @@ This repo applies [TC-GS](https://arxiv.org/pdf/2505.24796v2) to [DashGaussian](
 
 Only the forward pass utilizes the Tensor Cores.
 
-If you want to use TC-GS module, try install  ```submodules/tcgs_rasterizer``` **instead of** ```submodules/diff-gaussian-rasterization``` 
+If you want to use TC-GS module, try to install  ```submodules/tcgs_rasterizer``` **instead of** ```submodules/diff-gaussian-rasterization``` 
 
 ## Usage
 
