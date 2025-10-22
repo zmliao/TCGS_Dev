@@ -1,6 +1,6 @@
 export CUDA_VISIBLE_DEVICES=1
 
-DATA=/nas/shared/pjlab_lingjun_landmarks/yumulin_group/nerf_data/mipnerf360/
+DATA=/mnt/shared-storage-user/ailab-sys/liaozimu/data/mipnerf360
 SCENE=flowers
 # CKPT=/cpfs04/user/liaozimu/ckpt/models/
 

@@ -13,3 +13,7 @@ submodules/tcgs_rasterizer/build
 *.log
 *.nsys-rep
 *.sqlite
+kill.sh
+train_flower.sh
+eval_grad.sh
+render_back.py
