@@ -10,7 +10,7 @@ If you want to use TC-GS module, try to install  ```submodules/tcgs_rasterizer``
 
 1. clone this repo
 ```shell
-git clone https://github.com/TensorCore3DGS/TCGS_Dev/tree/master
+git clone https://github.com/TensorCore3DGS/TCGS_Dev.git
 ```
 
 2. Setup the environment as [DashGaussian](https://dashgaussian.github.io/) 
